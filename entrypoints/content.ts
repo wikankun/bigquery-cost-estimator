@@ -35,11 +35,45 @@ export default defineContentScript({
             if (bytes !== null) {
               console.log(`[BQ-Cost] Detected bytes: ${bytes}`);
               updateCostOverlay(bytes, el);
+              // Store current query cost for the Run button handler
+              (window as any).__BQ_LAST_COST = calculateCost(bytes);
             }
           }
         }
       }, 500);
     };
+
+    // Task 5: Intercept Run Button click
+    document.addEventListener('click', async (e) => {
+      const btn = (e.target as HTMLElement).closest('button');
+      if (btn?.textContent?.includes('Run') && !btn.disabled) {
+        const lastCost = (window as any).__BQ_LAST_COST || 0;
+        if (lastCost === 0) return;
+
+        const limit = await storage.getItem<number>('local:monthly_limit') || 10; // Default $10
+        const currentMonthly = await storage.getItem<number>('local:monthly_total') || 0;
+
+        if (currentMonthly + lastCost > limit) {
+          const confirmed = window.confirm(
+            `⚠️ Quota Warning\n\nThis query costs ~$${lastCost.toFixed(4)}.\nYour monthly total ($${currentMonthly.toFixed(2)}) will exceed your limit ($${limit.toFixed(2)}).\n\nProceed anyway?`
+          );
+          if (!confirmed) {
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+          }
+        }
+
+        // Track the spend
+        const today = new Date().toISOString().split('T')[0];
+        const dailyKey = `local:daily_total:${today}` as const;
+        const currentDaily = await storage.getItem<number>(dailyKey as any) || 0;
+
+        await storage.setItem('local:monthly_total', currentMonthly + lastCost);
+        await storage.setItem(dailyKey as any, currentDaily + lastCost);
+        console.log(`[BQ-Cost] Tracked cost: $${lastCost.toFixed(4)}`);
+      }
+    }, true);
 
     const observer = new MutationObserver(handleMutations);
 
