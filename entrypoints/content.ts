@@ -1,4 +1,5 @@
-import { extractBytes } from '@/utils/estimator';
+import { extractBytes, calculateCost } from '@/utils/estimator';
+import '@/assets/overlay.css';
 
 const SELECTORS = [
   '.cfc-query-validation-message',
@@ -11,6 +12,19 @@ export default defineContentScript({
   main() {
     let timeout: ReturnType<typeof setTimeout>;
 
+    const updateCostOverlay = (bytes: number, anchorEl: Element) => {
+      const cost = calculateCost(bytes);
+      let badge = anchorEl.querySelector('.bq-cost-badge');
+      
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'bq-cost-badge';
+        anchorEl.appendChild(badge);
+      }
+      
+      badge.textContent = `Est. Cost: $${cost.toFixed(4)}`;
+    };
+
     const handleMutations = () => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
@@ -20,7 +34,7 @@ export default defineContentScript({
             const bytes = extractBytes(el.textContent);
             if (bytes !== null) {
               console.log(`[BQ-Cost] Detected bytes: ${bytes}`);
-              // Task 4: updateCostOverlay(bytes, el);
+              updateCostOverlay(bytes, el);
             }
           }
         }

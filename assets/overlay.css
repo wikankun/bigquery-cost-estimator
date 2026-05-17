@@ -1,0 +1,20 @@
+.bq-cost-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid #d2e3fc;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.bq-cost-badge::before {
+  content: '💰';
+  margin-right: 4px;
+}
