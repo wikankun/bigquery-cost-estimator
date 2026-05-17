@@ -46,6 +46,19 @@ A powerful browser extension built with [WXT](https://wxt.dev/) that provides re
 
 ## Installation
 
+### Install from Release (Pre-built)
+
+1. Download the latest version from the [Releases](https://github.com/wikankun/bigquery-cost-estimator/releases) page.
+2. **Chrome / Edge / Brave**:
+   - Unzip the downloaded file.
+   - Go to `chrome://extensions/`.
+   - Enable **Developer mode** (toggle in the top right).
+   - Click **Load unpacked** and select the unzipped folder.
+3. **Firefox**:
+   - Open Firefox and go to `about:debugging#/runtime/this-firefox`.
+   - Click **Load Temporary Add-on...**.
+   - Select the downloaded `.zip` file.
+
 ### Development Setup
 
 1. **Clone the repository**:
