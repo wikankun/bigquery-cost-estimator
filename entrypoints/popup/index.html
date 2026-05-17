@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BigQuery Cost Estimator</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>BQ Cost Estimator</h1>
+      </header>
+      
+      <main>
+        <section class="stats">
+          <div class="stat-card">
+            <span class="label">Today</span>
+            <span id="daily-spend" class="value">$0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="label">This Month</span>
+            <span id="monthly-spend" class="value">$0.00</span>
+          </div>
+        </section>
+
+        <section class="progress-section">
+          <div class="progress-header">
+            <span>Monthly Quota</span>
+            <span id="quota-percent">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div id="quota-fill" class="progress-fill"></div>
+          </div>
+        </section>
+
+        <hr />
+
+        <section class="settings">
+          <div class="setting-item">
+            <label for="monthly-limit">Monthly Limit ($)</label>
+            <input type="number" id="monthly-limit" step="1" min="1" value="10" />
+          </div>
+          <button id="save-settings">Save Settings</button>
+        </section>
+      </main>
+
+      <footer>
+        <span id="last-sync">Rates synced: --</span>
+      </footer>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
