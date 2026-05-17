@@ -5,12 +5,24 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/wikankun/bigquery-cost-estimator" alt="License" />
-  <img src="https://img.shields.io/github/v/release/wikankun/bigquery-cost-estimator" alt="GitHub release" />
-  <img src="https://img.shields.io/github/stars/wikankun/bigquery-cost-estimator" alt="GitHub stars" />
-  <img src="https://img.shields.io/github/sponsors/wikankun" alt="GitHub sponsors" />
-  <img src="https://img.shields.io/github/downloads/wikankun/bigquery-cost-estimator/total" alt="GitHub downloads" />
-  <img src="https://img.shields.io/github/contributors/wikankun/bigquery-cost-estimator" alt="GitHub contributors" />
+  <a href="https://github.com/wikankun/bigquery-cost-estimator/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/wikankun/bigquery-cost-estimator" alt="License" />
+  </a>
+  <a href="https://github.com/wikankun/bigquery-cost-estimator/releases/latest">
+    <img src="https://img.shields.io/github/v/release/wikankun/bigquery-cost-estimator" alt="GitHub release" />
+  </a>
+  <a href="https://github.com/wikankun/bigquery-cost-estimator/stargazers">
+    <img src="https://img.shields.io/github/stars/wikankun/bigquery-cost-estimator" alt="GitHub stars" />
+  </a>
+  <a href="https://github.com/sponsors/wikankun">
+    <img src="https://img.shields.io/github/sponsors/wikankun" alt="GitHub sponsors" />
+  </a>
+  <a href="https://github.com/wikankun/bigquery-cost-estimator/releases">
+    <img src="https://img.shields.io/github/downloads/wikankun/bigquery-cost-estimator/total" alt="GitHub downloads" />
+  </a>
+  <a href="https://github.com/wikankun/bigquery-cost-estimator/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/wikankun/bigquery-cost-estimator" alt="GitHub contributors" />
+  </a>
 </p>
 
 A powerful browser extension built with [WXT](https://wxt.dev/) that provides real-time cost estimates for Google BigQuery queries directly in the Google Cloud Console.
@@ -38,7 +50,7 @@ A powerful browser extension built with [WXT](https://wxt.dev/) that provides re
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/bigquery-cost-estimator.git
+   git clone https://github.com/wikankun/bigquery-cost-estimator.git
    cd bigquery-cost-estimator
    ```
 
