@@ -94,11 +94,12 @@ hr {
   color: var(--text-light);
 }
 
-input[type="number"] {
+input[type="number"], select {
   padding: 8px;
   border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 14px;
+  background: white;
 }
 
 button {

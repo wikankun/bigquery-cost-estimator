@@ -2,19 +2,28 @@
   display: inline-flex;
   align-items: center;
   margin-left: 8px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: #e8f0fe;
-  color: #1a73e8;
-  font-size: 11px;
-  font-weight: 600;
-  border: 1px solid #d2e3fc;
-  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  /*color: #5f6368;*/
+  /*font-size: 12px;*/
+  font-family: Roboto, Arial, sans-serif;
   vertical-align: middle;
   white-space: nowrap;
 }
 
-.bq-cost-badge::before {
-  content: '💰';
+/* Success style (under limit) */
+.bq-cost-badge.success::before {
+  content: '✅';
   margin-right: 4px;
+  font-size: 12px;
+}
+
+/* Warning style (over limit) */
+.bq-cost-badge.warning {
+  color: #d93025;
+  font-weight: 500;
+}
+
+.bq-cost-badge.warning::before {
+  content: '⚠️';
+  margin-right: 4px;
+  font-size: 12px;
 }

@@ -1,4 +1,5 @@
 import './style.css';
+import { REGIONS, CURRENCIES, REGION_LABELS, REGION_PRICING, DEFAULT_REGION, DEFAULT_CURRENCY } from '@/utils/constants';
 
 async function init() {
   const dailySpendEl = document.querySelector<HTMLSpanElement>('#daily-spend')!;
@@ -7,20 +8,64 @@ async function init() {
   const quotaFillEl = document.querySelector<HTMLDivElement>('#quota-fill')!;
   const lastSyncEl = document.querySelector<HTMLSpanElement>('#last-sync')!;
   const monthlyLimitInput = document.querySelector<HTMLInputElement>('#monthly-limit')!;
+  const limitCurrencySymbol = document.querySelector<HTMLSpanElement>('#limit-currency-symbol')!;
+  const regionSelect = document.querySelector<HTMLSelectElement>('#region-select')!;
+  const currencySelect = document.querySelector<HTMLSelectElement>('#currency-select')!;
   const saveBtn = document.querySelector<HTMLButtonElement>('#save-settings')!;
 
-  // Load stats
+  // Populate selectors
+  REGIONS.forEach(region => {
+    const opt = document.createElement('option');
+    opt.value = region;
+    const label = REGION_LABELS[region];
+    const price = REGION_PRICING[region];
+    opt.textContent = `${region}${label ? ` (${label})` : ''} - $${price.toFixed(2)}/TiB`;
+    regionSelect.appendChild(opt);
+  });
+
+  CURRENCIES.forEach(curr => {
+    const opt = document.createElement('option');
+    opt.value = curr.code;
+    opt.textContent = `${curr.code.toUpperCase()} (${curr.symbol})`;
+    currencySelect.appendChild(opt);
+  });
+
+  // Load settings
   const today = new Date().toISOString().split('T')[0];
   const dailyKey = `local:daily_total:${today}` as const;
   const dailySpend = await storage.getItem<number>(dailyKey as any) || 0;
   const monthlySpend = await storage.getItem<number>('local:monthly_total') || 0;
   const lastSync = await storage.getItem<number>('local:last_sync');
   const limit = await storage.getItem<number>('local:monthly_limit') || 10;
+  const region = await storage.getItem<string>('local:region') || DEFAULT_REGION;
+  const currencyCode = await storage.getItem<string>('local:currency') || DEFAULT_CURRENCY;
+  
+  const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
+  const rates = await storage.getItem<Record<string, number>>('local:rates') || { [currency.code]: 1 };
+  const rate = rates[currency.code] || 1;
 
   // Update UI
-  dailySpendEl.textContent = `$${dailySpend.toFixed(2)}`;
-  monthlySpendEl.textContent = `$${monthlySpend.toFixed(2)}`;
-  monthlyLimitInput.value = limit.toString();
+  const formatValue = (usdValue: number) => {
+    const converted = usdValue * rate;
+    const formatter = new Intl.NumberFormat(currency.locale || navigator.language, {
+      style: 'currency',
+      currency: currency.code.toUpperCase(),
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return formatter.format(converted);
+  };
+
+  dailySpendEl.textContent = formatValue(dailySpend);
+  monthlySpendEl.textContent = formatValue(monthlySpend);
+  
+  // Show limit in local currency
+  const localLimit = limit * rate;
+  monthlyLimitInput.value = localLimit.toFixed(2);
+  limitCurrencySymbol.textContent = currency.symbol;
+
+  regionSelect.value = region;
+  currencySelect.value = currencyCode;
 
   if (lastSync) {
     lastSyncEl.textContent = `Rates synced: ${new Date(lastSync).toLocaleString()}`;
@@ -42,19 +87,26 @@ async function init() {
 
   // Save settings
   saveBtn.addEventListener('click', async () => {
-    const newLimit = parseFloat(monthlyLimitInput.value);
-    if (!isNaN(newLimit) && newLimit > 0) {
-      await storage.setItem('local:monthly_limit', newLimit);
-      updateProgress(monthlySpend, newLimit);
+    const localLimitInput = parseFloat(monthlyLimitInput.value);
+    const newRegion = regionSelect.value;
+    const newCurrency = currencySelect.value;
+
+    if (!isNaN(localLimitInput) && localLimitInput > 0) {
+      // Convert back to USD for internal storage
+      const newLimitUsd = localLimitInput / rate;
+
+      await storage.setItem('local:monthly_limit', newLimitUsd);
+      await storage.setItem('local:region', newRegion);
+      await storage.setItem('local:currency', newCurrency);
       
+      // Reload UI or just show saved
       const originalText = saveBtn.textContent;
-      saveBtn.textContent = 'Saved!';
+      saveBtn.textContent = 'Saved! Reloading...';
       saveBtn.style.background = '#1e8e3e';
       
       setTimeout(() => {
-        saveBtn.textContent = originalText;
-        saveBtn.style.background = '';
-      }, 2000);
+        window.location.reload();
+      }, 1000);
     }
   });
 }

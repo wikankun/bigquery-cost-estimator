@@ -1,5 +1,5 @@
 // utils/estimator.ts
-import { REGION_PRICING, DEFAULT_REGION } from './constants';
+import { REGION_PRICING, DEFAULT_REGION, FALLBACK_PRICE } from './constants';
 
 export function extractBytes(text: string): number | null {
   // Regex to match value and unit (MB, GB, TB, PB)
@@ -26,7 +26,7 @@ export function extractBytes(text: string): number | null {
 }
 
 export function calculateCost(bytes: number, region: string = DEFAULT_REGION): number {
-  const pricePerTiB = REGION_PRICING[region] || REGION_PRICING[DEFAULT_REGION];
+  const pricePerTiB = REGION_PRICING[region] ?? FALLBACK_PRICE;
   const tib = bytes / Math.pow(2, 40);
   return Number((tib * pricePerTiB).toFixed(4));
 }
