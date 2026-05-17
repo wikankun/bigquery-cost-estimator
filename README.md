@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/github/v/release/wikankun/bigquery-cost-estimator" alt="GitHub release" />
   </a>
   <a href="https://github.com/wikankun/bigquery-cost-estimator/stargazers">
-    <img src="https://img.shields.io/github/stars/wikankun/bigquery-cost-estimator" alt="GitHub stars" />
+    <img src="https://img.shields.io/github/stars/wikankun/bigquery-cost-estimator?style=flat" alt="GitHub stars" />
   </a>
   <a href="https://github.com/sponsors/wikankun">
     <img src="https://img.shields.io/github/sponsors/wikankun" alt="GitHub sponsors" />
