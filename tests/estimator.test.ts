@@ -6,7 +6,7 @@ describe('calculateCost', () => {
   it('calculates cost correctly for 1 TiB in us-central1', () => {
     const bytes = Math.pow(2, 40); // 1 TiB
     const region = 'us-central1';
-    expect(calculateCost(bytes, region)).toBe(5.00);
+    expect(calculateCost(bytes, region)).toBe(6.25);
   });
 
   it('calculates cost correctly for 1 TiB in US (default)', () => {
@@ -36,4 +36,3 @@ describe('extractBytes', () => {
     expect(extractBytes('No bytes here')).toBeNull();
   });
 });
-

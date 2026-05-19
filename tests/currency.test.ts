@@ -1,6 +1,6 @@
 // tests/currency.test.ts
 import { describe, it, expect, vi } from 'vitest';
-import { fetchExchangeRates } from '../utils/currency';
+import { fetchExchangeRates, formatCost } from '../utils/currency';
 
 describe('fetchExchangeRates', () => {
   it('fetches exchange rates successfully', async () => {
@@ -23,5 +23,31 @@ describe('fetchExchangeRates', () => {
     });
 
     await expect(fetchExchangeRates('usd')).rejects.toThrow('Failed to fetch exchange rates');
+  });
+});
+
+describe('formatCost', () => {
+  it('formats USD without decimals', () => {
+    const result = formatCost(12.3456, { code: 'usd' }, false);
+    // Use regex to match localized currency symbols which might vary by environment, 
+    // but usually it's $12 in en-US
+    expect(result).toMatch(/\$12/);
+  });
+
+  it('formats USD with 4 decimals', () => {
+    const result = formatCost(12.34567, { code: 'usd' }, true);
+    expect(result).toMatch(/\$12\.3457/);
+  });
+
+  it('formats with exchange rate', () => {
+    const result = formatCost(10, { code: 'eur', locale: 'de-DE' }, true, 0.9);
+    // 10 * 0.9 = 9.0000 EUR
+    // German format uses comma for decimal and space for symbol usually
+    expect(result).toMatch(/9,0000\s*€/);
+  });
+
+  it('rounds to nearest integer when decimals hidden', () => {
+    expect(formatCost(12.5, { code: 'usd' }, false)).toMatch(/\$13/);
+    expect(formatCost(12.4, { code: 'usd' }, false)).toMatch(/\$12/);
   });
 });

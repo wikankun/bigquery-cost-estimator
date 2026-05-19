@@ -89,6 +89,16 @@ hr {
   margin-bottom: 12px;
 }
 
+.setting-item.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-item.checkbox input {
+  margin: 0;
+}
+
 .setting-item label {
   font-size: 12px;
   color: var(--text-light);

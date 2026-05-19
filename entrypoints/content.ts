@@ -1,4 +1,5 @@
 import { extractBytes, calculateCost } from '@/utils/estimator';
+import { formatCost } from '@/utils/currency';
 import { CURRENCIES, DEFAULT_REGION, DEFAULT_CURRENCY } from '@/utils/constants';
 import '@/assets/overlay.css';
 
@@ -17,13 +18,13 @@ export default defineContentScript({
         const currencyCode = await storage.getItem<string>('local:currency') || DEFAULT_CURRENCY;
         const limit = await storage.getItem<number>('local:monthly_limit') || 10;
         const currentMonthly = await storage.getItem<number>('local:monthly_total') || 0;
+        const showDecimals = await storage.getItem<boolean>('local:show_decimals') ?? true;
 
         const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
         const rates = await storage.getItem<Record<string, number>>('local:rates') || { [currency.code]: 1 };
         const rate = rates[currency.code] || 1;
 
         const costUsd = calculateCost(bytes, region);
-        const convertedCost = costUsd * rate;
 
         let badge = anchorEl.querySelector('.bq-cost-badge');
 
@@ -37,14 +38,7 @@ export default defineContentScript({
         badge.classList.toggle('success', !isOverLimit);
         badge.classList.toggle('warning', isOverLimit);
 
-        // Localized currency formatting
-        const formatter = new Intl.NumberFormat(currency.locale || navigator.language, {
-          style: 'currency',
-          currency: currency.code.toUpperCase(),
-          minimumFractionDigits: 4,
-          maximumFractionDigits: 4,
-        });
-        badge.textContent = `Cost: ${formatter.format(convertedCost)}`;
+        badge.textContent = `Cost: ${formatCost(costUsd, currency, showDecimals, rate)}`;
         (window as any).__BQ_LAST_COST = costUsd;
       } catch (error) {
         if (error instanceof Error && error.message.includes('context invalidated')) {
@@ -76,43 +70,57 @@ export default defineContentScript({
       }
     };
 
-    // Task 5: Intercept Run Button click
-    document.addEventListener('click', async (e) => {
-      try {
-        const btn = (e.target as HTMLElement).closest('button');
-        if (btn?.textContent?.includes('Run') && !btn.disabled) {
-          const lastCost = (window as any).__BQ_LAST_COST || 0;
-          if (lastCost === 0) return;
+    let cachedLimit = 10;
+    let cachedMonthly = 0;
 
-          const limit = await storage.getItem<number>('local:monthly_limit') || 10; // Default $10
-          const currentMonthly = await storage.getItem<number>('local:monthly_total') || 0;
+    const updateCache = async () => {
+      cachedLimit = await storage.getItem<number>('local:monthly_limit') || 10;
+      cachedMonthly = await storage.getItem<number>('local:monthly_total') || 0;
+    };
 
-          if (currentMonthly + lastCost > limit) {
-            const confirmed = window.confirm(
-              `⚠️ Quota Warning\n\nThis query costs ~$${lastCost.toFixed(4)}.\nYour monthly total ($${currentMonthly.toFixed(2)}) will exceed your limit ($${limit.toFixed(2)}).\n\nProceed anyway?`
-            );
-            if (!confirmed) {
-              e.stopPropagation();
-              e.preventDefault();
-              return;
-            }
-          }
+    updateCache();
+    storage.watch<number>('local:monthly_limit', (val) => cachedLimit = val || 10);
+    storage.watch<number>('local:monthly_total', (val) => cachedMonthly = val || 0);
 
-          // Track the spend
-          const today = new Date().toISOString().split('T')[0];
-          const dailyKey = `local:daily_total:${today}` as const;
-          const currentDaily = await storage.getItem<number>(dailyKey as any) || 0;
+    const trackSpend = async (cost: number) => {
+      const today = new Date().toISOString().split('T')[0];
+      const dailyKey = `local:daily_total:${today}` as const;
+      const currentDaily = await storage.getItem<number>(dailyKey as any) || 0;
+      
+      // Update storage - cachedMonthly will be updated by the watcher
+      await storage.setItem('local:monthly_total', cachedMonthly + cost);
+      await storage.setItem(dailyKey as any, currentDaily + cost);
+      console.log(`[BQ-Cost] Tracked cost: $${cost.toFixed(4)}`);
+    };
 
-          await storage.setItem('local:monthly_total', currentMonthly + lastCost);
-          await storage.setItem(dailyKey as any, currentDaily + lastCost);
-          console.log(`[BQ-Cost] Tracked cost: $${lastCost.toFixed(4)}`);
-        }
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('context invalidated')) {
-          // Extension updated/reloaded, fail silently as cleanup is handled by observer check
+    const handleExecution = (e: Event) => {
+      const lastCost = (window as any).__BQ_LAST_COST || 0;
+      if (lastCost <= 0) return;
+
+      if (cachedMonthly + lastCost > cachedLimit) {
+        const confirmed = window.confirm(
+          `⚠️ Quota Warning\n\nThis query costs ~$${lastCost.toFixed(4)}.\nYour monthly total ($${cachedMonthly.toFixed(2)}) will exceed your limit ($${cachedLimit.toFixed(2)}).\n\nProceed anyway?`
+        );
+        if (!confirmed) {
+          e.stopPropagation();
+          e.preventDefault();
           return;
         }
-        console.error('[BQ-Cost] Run button handler failed:', error);
+      }
+      trackSpend(lastCost);
+    };
+
+    // Intercept Run actions
+    document.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('button');
+      if (btn?.textContent?.includes('Run') && !btn.disabled) {
+        handleExecution(e);
+      }
+    }, true);
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        handleExecution(e);
       }
     }, true);
 

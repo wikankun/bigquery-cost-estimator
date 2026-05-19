@@ -1,5 +1,6 @@
 import './style.css';
 import { REGIONS, CURRENCIES, REGION_LABELS, REGION_PRICING, DEFAULT_REGION, DEFAULT_CURRENCY } from '@/utils/constants';
+import { formatCost } from '@/utils/currency';
 
 async function init() {
   const dailySpendEl = document.querySelector<HTMLSpanElement>('#daily-spend')!;
@@ -11,6 +12,7 @@ async function init() {
   const limitCurrencySymbol = document.querySelector<HTMLSpanElement>('#limit-currency-symbol')!;
   const regionSelect = document.querySelector<HTMLSelectElement>('#region-select')!;
   const currencySelect = document.querySelector<HTMLSelectElement>('#currency-select')!;
+  const showDecimalsCheckbox = document.querySelector<HTMLInputElement>('#show-decimals')!;
   const saveBtn = document.querySelector<HTMLButtonElement>('#save-settings')!;
 
   // Populate selectors
@@ -39,6 +41,7 @@ async function init() {
   const limit = await storage.getItem<number>('local:monthly_limit') || 10;
   const region = await storage.getItem<string>('local:region') || DEFAULT_REGION;
   const currencyCode = await storage.getItem<string>('local:currency') || DEFAULT_CURRENCY;
+  const showDecimals = await storage.getItem<boolean>('local:show_decimals') ?? true;
   
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
   const rates = await storage.getItem<Record<string, number>>('local:rates') || { [currency.code]: 1 };
@@ -46,14 +49,7 @@ async function init() {
 
   // Update UI
   const formatValue = (usdValue: number) => {
-    const converted = usdValue * rate;
-    const formatter = new Intl.NumberFormat(currency.locale || navigator.language, {
-      style: 'currency',
-      currency: currency.code.toUpperCase(),
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-    return formatter.format(converted);
+    return formatCost(usdValue, currency, showDecimals, rate, 2);
   };
 
   dailySpendEl.textContent = formatValue(dailySpend);
@@ -66,6 +62,7 @@ async function init() {
 
   regionSelect.value = region;
   currencySelect.value = currencyCode;
+  showDecimalsCheckbox.checked = showDecimals;
 
   if (lastSync) {
     lastSyncEl.textContent = `Rates synced: ${new Date(lastSync).toLocaleString()}`;
@@ -90,6 +87,7 @@ async function init() {
     const localLimitInput = parseFloat(monthlyLimitInput.value);
     const newRegion = regionSelect.value;
     const newCurrency = currencySelect.value;
+    const newShowDecimals = showDecimalsCheckbox.checked;
 
     if (!isNaN(localLimitInput) && localLimitInput > 0) {
       // Convert back to USD for internal storage
@@ -98,6 +96,7 @@ async function init() {
       await storage.setItem('local:monthly_limit', newLimitUsd);
       await storage.setItem('local:region', newRegion);
       await storage.setItem('local:currency', newCurrency);
+      await storage.setItem('local:show_decimals', newShowDecimals);
       
       // Reload UI or just show saved
       const originalText = saveBtn.textContent;
