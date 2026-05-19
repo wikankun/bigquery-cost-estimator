@@ -36,12 +36,13 @@ jobs:
       - name: Generate changelog from previous tag to HEAD
         id: changelog
         run: |
-          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          latest_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$latest_tag" ]; then
-            log=$(git log "$latest_tag"..HEAD --pretty=format:"%h %s")
+            log=$(git log "${latest_tag}"..HEAD^ --pretty=format:"%h %s")
           else
-            log=$(git log --pretty=format:"%h %s")
+            log=$(git log HEAD^ --pretty=format:"%h %s")
           fi
+          echo "Log output:"
           echo "$log"
           echo "log<<EOF" >> $GITHUB_OUTPUT
           echo "Changelog:" >> $GITHUB_OUTPUT
