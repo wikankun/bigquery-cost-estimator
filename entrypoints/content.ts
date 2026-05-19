@@ -72,21 +72,34 @@ export default defineContentScript({
 
     let cachedLimit = 10;
     let cachedMonthly = 0;
+    let cachedCurrency = CURRENCIES[0];
+    let cachedRate = 1;
 
     const updateCache = async () => {
       cachedLimit = await storage.getItem<number>('local:monthly_limit') || 10;
       cachedMonthly = await storage.getItem<number>('local:monthly_total') || 0;
+
+      const currencyCode = await storage.getItem<string>('local:currency') || DEFAULT_CURRENCY;
+      cachedCurrency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
+
+      const rates = await storage.getItem<Record<string, number>>('local:rates') || { [cachedCurrency.code]: 1 };
+      cachedRate = rates[cachedCurrency.code] || 1;
     };
 
     updateCache();
     storage.watch<number>('local:monthly_limit', (val) => cachedLimit = val || 10);
     storage.watch<number>('local:monthly_total', (val) => cachedMonthly = val || 0);
+    storage.watch<string>('local:currency', async (code) => {
+      cachedCurrency = CURRENCIES.find(c => c.code === code) || CURRENCIES[0];
+      const rates = await storage.getItem<Record<string, number>>('local:rates') || { [cachedCurrency.code]: 1 };
+      cachedRate = rates[cachedCurrency.code] || 1;
+    });
 
     const trackSpend = async (cost: number) => {
       const today = new Date().toISOString().split('T')[0];
       const dailyKey = `local:daily_total:${today}` as const;
       const currentDaily = await storage.getItem<number>(dailyKey as any) || 0;
-      
+
       // Update storage - cachedMonthly will be updated by the watcher
       await storage.setItem('local:monthly_total', cachedMonthly + cost);
       await storage.setItem(dailyKey as any, currentDaily + cost);
@@ -98,8 +111,12 @@ export default defineContentScript({
       if (lastCost <= 0) return;
 
       if (cachedMonthly + lastCost > cachedLimit) {
+        const costStr = formatCost(lastCost, cachedCurrency, true, cachedRate, 2);
+        const totalStr = formatCost(cachedMonthly, cachedCurrency, true, cachedRate, 2);
+        const limitStr = formatCost(cachedLimit, cachedCurrency, true, cachedRate, 2);
+
         const confirmed = window.confirm(
-          `⚠️ Quota Warning\n\nThis query costs ~$${lastCost.toFixed(4)}.\nYour monthly total ($${cachedMonthly.toFixed(2)}) will exceed your limit ($${cachedLimit.toFixed(2)}).\n\nProceed anyway?`
+          `⚠️ Quota Warning\n\nThis query costs ~${costStr}.\nYour monthly total (${totalStr}) will exceed your limit (${limitStr}).\n\nProceed anyway?`
         );
         if (!confirmed) {
           e.stopPropagation();
