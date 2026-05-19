@@ -34,16 +34,16 @@ describe('formatCost', () => {
     expect(result).toMatch(/\$12/);
   });
 
-  it('formats USD with 4 decimals', () => {
+  it('formats USD with 2 decimals', () => {
     const result = formatCost(12.34567, { code: 'usd' }, true);
-    expect(result).toMatch(/\$12\.3457/);
+    expect(result).toMatch(/\$12\.35/);
   });
 
   it('formats with exchange rate', () => {
     const result = formatCost(10, { code: 'eur', locale: 'de-DE' }, true, 0.9);
-    // 10 * 0.9 = 9.0000 EUR
+    // 10 * 0.9 = 9.00 EUR
     // German format uses comma for decimal and space for symbol usually
-    expect(result).toMatch(/9,0000\s*€/);
+    expect(result).toMatch(/9,00\s*€/);
   });
 
   it('rounds to nearest integer when decimals hidden', () => {

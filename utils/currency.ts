@@ -15,7 +15,7 @@ export function formatCost(
   precision?: number
 ): string {
   const converted = usdValue * exchangeRate;
-  const fractionDigits = precision !== undefined ? precision : (showDecimals ? 4 : 0);
+  const fractionDigits = precision !== undefined ? precision : (showDecimals ? 2 : 0);
 
   return new Intl.NumberFormat(currency.locale || 'en-US', {
     style: 'currency',
